@@ -1,0 +1,38 @@
+{
+  "media_source_id": "123456",
+  "scheduled_job_id": "789012",
+  "media_source_url": "srt://example.com:9999?mode=caller",
+  "media_source_pass_phrase": "your-passphrase-here",
+  "start_date_time": null,
+  "stop_date_time": null,
+  "segment_length_in_seconds": 300,
+  "local_segments_dir": "/app/segments",
+  
+  "srt_latency": 120,
+  "srt_maxbw": 0,
+  "srt_rcvbuf": 8192000,
+  "srt_sndbuf": 8192000,
+  "srt_pbkeylen": 16,
+  
+  "bucket": "your-s3-bucket-name",
+  "bucket_path": "processing/continuous",
+  "aws_region": "us-east-1",
+  
+  "video_process": false,
+  "video_crf": 23,
+  "video_bitrate": "2000k",
+  "video_preset": "medium",
+  "video_fps": 30,
+  "video_width": 1920,
+  "video_height": 1080,
+  
+  "audio_downmix": false,
+  "audio_bitrate": "192k",
+  "audio_stream_index": "auto",
+  "video_stream_index": 0,
+  
+  "max_connection_retries": 5,
+  "base_retry_delay_seconds": 30,
+  "max_retry_delay_seconds": 300,
+  "performance_warning_threshold": 0.75
+}
