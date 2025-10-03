@@ -593,8 +593,11 @@ class StreamIngestionEngineV5:
         cmd.extend([
             '-map', f'0:{video_index}',
             '-map', f'0:{audio_index}',
-            '-c:v', 'copy',  # Always copy video
-            '-c:a', 'copy',  # ALWAYS COPY AUDIO for perfect sync
+            '-c:v', 'copy',  # Always copy video (no transcoding)
+            '-c:a', 'aac',   # Re-encode audio to AAC (handles corrupt packets)
+            '-ac', '2',      # Downmix to stereo (live)
+            '-b:a', self.config.get('audio_bitrate', '192k'),  # Audio bitrate
+            '-ar', '48000',  # Sample rate
             '-f', 'segment',
             '-segment_time', str(segment_seconds),
             '-strftime', '1',  # KEY: Automatic timestamping
@@ -611,9 +614,9 @@ class StreamIngestionEngineV5:
         cmd.append(output_pattern)
         
         self.logger.info(f"Starting FFmpeg with strftime - {segment_seconds}s MP4 segments")
-        self.logger.info("Audio: COPY mode (no transcoding - sync preserved)")
         self.logger.info("Video: COPY mode (no transcoding - quality preserved)")
-        self.logger.info("Format: Direct MP4 output (no conversion needed)")
+        self.logger.info(f"Audio: AAC stereo @ {self.config.get('audio_bitrate', '192k')} (live downmix + re-encode)")
+        self.logger.info("Format: Direct MP4 output with live downmix (no post-processing needed)")
         self.logger.info(f"Output pattern: seg_{media_source}_EPOCH_{segment_seconds}.mp4")
         
         self.ffmpeg_process = subprocess.Popen(
@@ -674,18 +677,18 @@ class StreamIngestionEngineV5:
         return None
 
     def post_process_segment(self, segment_path):
-        """Post-process segment: downmix if needed (file is already MP4 from FFmpeg)"""
+        """Post-process segment: no processing needed (downmix happens live during recording)"""
         final_path = segment_path
 
-        # Determine if we need audio processing
+        # Audio is already downmixed during recording - no post-processing needed
+        self.logger.info(f"Segment ready (downmixed live during recording): {final_path.name}")
+        return final_path
+
+    def post_process_segment_OLD_UNUSED(self, segment_path):
+        """OLD CODE - kept for reference only - downmixing now happens live"""
+        final_path = segment_path
         needs_downmix = self.config.get('audio_downmix', True)
 
-        # File is already MP4 from FFmpeg - skip if no downmix needed
-        if not needs_downmix:
-            self.logger.info(f"Segment ready (no downmix needed): {final_path.name}")
-            return final_path
-
-        # Downmix the MP4 file (file is already MP4, just need to downmix audio)
         if final_path.suffix == '.mp4' and needs_downmix:
             try:
                 # Create temp file to avoid input/output conflict
